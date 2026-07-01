@@ -33,7 +33,7 @@ Designed specifically for seamless testing, this application deliberately bypass
 ### Prerequisites
 - Node.js (for the frontend)
 - Python 3.9+ (for the backend)
-- API Keys: Google Gemini, Tavily, and Supabase (optional DB)
+- API Keys: Google Gemini, and Tavily
 
 ### Backend Setup
 1. Navigate to the backend directory:
@@ -53,8 +53,6 @@ Designed specifically for seamless testing, this application deliberately bypass
    ```env
    GEMINI_API_KEY="your_gemini_key"
    TAVILY_API_KEY="your_tavily_key"
-   SUPABASE_URL="your_supabase_url"
-   SUPABASE_KEY="your_supabase_key"
    ```
 5. Start the FastAPI server:
    ```bash

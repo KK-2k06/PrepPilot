@@ -4,7 +4,6 @@ from fastapi import FastAPI, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from agents.planner import parse_pdf, generate_study_plan
-from database import save_topics, save_schedule
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -39,10 +38,6 @@ async def create_plan(
         
         # 2. Structure & Schedule using Gemini
         plan_data = generate_study_plan(pdf_content, current_date, exam_date, study_hours)
-        
-        # 3. Save to Supabase (assuming schema is set up)
-        save_topics(plan_data["topics"])
-        save_schedule(plan_data["schedule"])
         
         return {"status": "success", "data": plan_data}
         
