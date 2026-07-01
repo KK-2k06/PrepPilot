@@ -50,7 +50,12 @@ const UploadSetup = () => {
       const data = await response.json();
       
       if (data.status === 'success') {
-        // Store the generated plan in localStorage for now
+        // Clear out any old data from a previous syllabus run
+        localStorage.removeItem('cachedQuiz');
+        localStorage.removeItem('quizResults');
+        localStorage.removeItem('cachedResources');
+        
+        // Store the generated plan in localStorage
         localStorage.setItem('studyPlan', JSON.stringify(data.data));
         navigate('/schedule');
       } else {

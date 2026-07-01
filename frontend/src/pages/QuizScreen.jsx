@@ -165,6 +165,7 @@ const QuizScreen = () => {
         }
         // Clear cache so it doesn't stay around forever
         localStorage.removeItem('cachedQuiz');
+        localStorage.removeItem('cachedResources');
       } else {
         setError(data.message);
       }

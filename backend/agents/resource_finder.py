@@ -24,33 +24,51 @@ async def find_resources(topics: list) -> list:
         
     client = genai.Client(api_key=gemini_key)
     
-    raw_search_data = {}
-    mcp_url = f"https://mcp.tavily.com/mcp/?tavilyApiKey={tavily_key}"
+    import json
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import stdio_client
     
-    # Connect to the remote Tavily MCP server via SSE
-    try:
-        async with sse_client(mcp_url) as (read, write):
-            async with ClientSession(read, write) as session:
-                await session.initialize()
-                
-                # Fetch resources for each topic using the MCP tool
-                for topic in topics:
-                    try:
-                        result = await session.call_tool(
-                            "tavily_search", 
-                            {"query": f"{topic} tutorial clear explanation", "max_results": 4}
-                        )
-                        if result.content and len(result.content) > 0:
-                            search_results_text = result.content[0].text
-                            raw_search_data[topic] = json.loads(search_results_text)
-                        else:
-                            raw_search_data[topic] = []
-                    except Exception as e:
-                        raw_search_data[topic] = []
-                        print(f"MCP Tavily search failed for {topic}: {e}")
-    except Exception as e:
-        print(f"Failed to connect to MCP server: {e}")
-        return []
+    raw_search_data = {}
+    
+    # We define an async function to handle the MCP connection per topic
+    async def fetch_mcp(t):
+        import sys
+        server_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "tavily_mcp.py")
+        server_params = StdioServerParameters(
+            command=sys.executable,
+            args=[server_path],
+            env=os.environ.copy()
+        )
+        try:
+            async with stdio_client(server_params) as (read, write):
+                async with ClientSession(read, write) as session:
+                    await session.initialize()
+                    
+                    # Fetch Articles
+                    result_article = await session.call_tool(
+                        "tavily_search", 
+                        {"query": f"{t} clear explanation article guide", "max_results": 2}
+                    )
+                    # Fetch Videos
+                    result_video = await session.call_tool(
+                        "tavily_search", 
+                        {"query": f"{t} tutorial youtube video", "max_results": 2}
+                    )
+                    
+                    merged = []
+                    if result_article.content and len(result_article.content) > 0:
+                        merged.extend(json.loads(result_article.content[0].text))
+                    if result_video.content and len(result_video.content) > 0:
+                        merged.extend(json.loads(result_video.content[0].text))
+                        
+                    return merged
+        except Exception as e:
+            print(f"MCP Tavily search failed for {t}: {e}")
+            return []
+
+    # Fetch resources for each topic using the Local MCP Server
+    for topic in topics:
+        raw_search_data[topic] = await fetch_mcp(topic)
             
     prompt = f"""
     You are an expert tutor. I am providing you with a list of topics a student struggled with, along with live web search results for those topics.
