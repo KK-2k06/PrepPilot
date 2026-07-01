@@ -1,5 +1,6 @@
 import os
 import json
+import datetime
 import pdfplumber
 from google import genai
 from google.genai import types
@@ -38,8 +39,9 @@ def generate_study_plan(pdf_content: str, current_date: str, exam_date: str, stu
     
     CRITICAL RULES:
     1. The schedule must START exactly from the current date ({current_date}) and END strictly on the day BEFORE the exam date ({exam_date}). Do NOT schedule anything on the exam date itself.
-    2. TIME CONSTRAINTS: If the total estimated hours to learn all topics significantly exceeds the total available study hours (available days * {study_hours} hours/day), you MUST prioritize the highest-weightage topics and cut the less important ones. 
+    2. TIME CONSTRAINTS: You must strictly adhere to the user's daily limit of {study_hours} hours. The `estimated_hours` for ANY single day must NEVER exceed {study_hours}. If the total estimated hours to learn all topics exceeds the total available study time, you MUST prioritize the highest-weightage topics and cut the less important ones.
     3. If you had to drop topics or heavily cram the schedule due to lack of time, provide a brief, helpful warning message in the "warning" field. If there is enough time to cover everything comfortably, set "warning" to null.
+    4. SURPLUS TIME: If the syllabus is small and you have more total available study hours than needed to cover the topics, you MUST still generate a schedule that spans the ENTIRE duration from {current_date} to the day before {exam_date}. Allocate the excess days towards "Full Revision", "Practice Exams", and "Deep Dives" so that the schedule perfectly fills the entire requested timeframe without any missing days.
     
     Output ONLY a valid JSON object with exactly this structure:
     {{
@@ -64,12 +66,24 @@ def generate_study_plan(pdf_content: str, current_date: str, exam_date: str, stu
     """
     
     response = client.models.generate_content(
-        model='gemini-2.5-flash-lite',
+        model='gemini-3.1-flash-lite',
         contents=prompt,
         config=types.GenerateContentConfig(
             response_mime_type="application/json"
         )
     )
     
-    return json.loads(response.text)
+    plan_data = json.loads(response.text)
+    
+    # Post-process: Force deterministic dates to prevent LLM date hallucinations
+    try:
+        start_date = datetime.datetime.strptime(current_date, "%Y-%m-%d")
+        if "schedule" in plan_data:
+            for idx, day_plan in enumerate(plan_data["schedule"]):
+                day_plan["day"] = idx + 1
+                day_plan["date"] = (start_date + datetime.timedelta(days=idx)).strftime("%Y-%m-%d")
+    except Exception as e:
+        print(f"Warning: Date enforcement failed: {e}")
+        
+    return plan_data
 

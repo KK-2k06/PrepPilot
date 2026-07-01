@@ -27,7 +27,8 @@ const StudySchedule = () => {
         }));
         setSchedule(enrichedSchedule);
         
-        const todayStr = new Date().toISOString().split('T')[0];
+        const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+        const todayStr = (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
         const todayIndex = enrichedSchedule.findIndex(day => day.date === todayStr);
         if (todayIndex >= 0) {
             setCurrentDayIndex(todayIndex);
@@ -79,15 +80,15 @@ const StudySchedule = () => {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {schedule.map((item, index) => (
-          <div key={index}>
+          <div key={index} className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <div 
-              className="card" 
               style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '1.5rem', 
                 padding: '1rem 1.5rem', 
-                borderLeft: index === currentDayIndex ? '4px solid var(--primary-color)' : '1px solid var(--border-color)' 
+                borderLeft: index === currentDayIndex ? '4px solid var(--primary-color)' : '4px solid transparent',
+                backgroundColor: 'var(--card-bg)'
               }}
             >
               <div style={{ cursor: 'pointer', color: item.completed ? 'var(--secondary-color)' : 'var(--border-color)' }}>
@@ -138,32 +139,35 @@ const StudySchedule = () => {
               </div>
             </div>
             
-            {expandedDays[index] && (
-              <div style={{ 
-                padding: '1.5rem', 
-                border: '1px solid var(--border-color)', 
-                borderTop: 'none', 
-                borderRadius: '0 0 0.5rem 0.5rem', 
-                backgroundColor: '#fafafa', 
-                marginTop: '-1rem',
-                marginLeft: '1rem',
-                marginRight: '1rem'
-              }}>
-                 <h4 style={{ fontSize: '0.95rem', color: 'var(--text-main)', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Topic Breakdown</h4>
-                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                   {item.topics.map((t, i) => (
-                     <div key={i}>
-                       <div style={{ fontWeight: '600', fontSize: '0.9rem', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
-                         {typeof t === 'string' ? t : t.name}
+            <div 
+              style={{ 
+                display: 'grid',
+                gridTemplateRows: expandedDays[index] ? '1fr' : '0fr',
+                transition: 'grid-template-rows 0.3s ease'
+              }}
+            >
+              <div style={{ overflow: 'hidden' }}>
+                <div style={{ 
+                  padding: '1.5rem', 
+                  borderTop: '1px solid var(--border-color)', 
+                  backgroundColor: 'var(--bg-color)'
+                }}>
+                   <h4 style={{ fontSize: '0.95rem', color: 'var(--text-main)', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Topic Breakdown</h4>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                     {item.topics.map((t, i) => (
+                       <div key={i}>
+                         <div style={{ fontWeight: '600', fontSize: '0.9rem', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
+                           {typeof t === 'string' ? t : t.name}
+                         </div>
+                         <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                           {typeof t === 'string' ? 'No detailed breakdown available.' : t.details}
+                         </div>
                        </div>
-                       <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
-                         {typeof t === 'string' ? 'No detailed breakdown available.' : t.details}
-                       </div>
-                     </div>
-                   ))}
-                 </div>
+                     ))}
+                   </div>
+                </div>
               </div>
-            )}
+            </div>
           </div>
         ))}
       </div>

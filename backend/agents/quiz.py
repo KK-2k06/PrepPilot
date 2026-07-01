@@ -38,7 +38,7 @@ def generate_quiz(topics: list) -> list:
     """
     
     response = client.models.generate_content(
-        model='gemini-2.5-flash-lite',
+        model='gemini-3.1-flash-lite',
         contents=prompt,
         config=types.GenerateContentConfig(
             response_mime_type="application/json"
@@ -111,7 +111,7 @@ def grade_quiz(questions: list, user_answers: dict) -> dict:
         """
         
         response = client.models.generate_content(
-            model='gemini-2.5-flash-lite',
+            model='gemini-3.1-flash-lite',
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json"

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader, CheckCircle2, XCircle } from 'lucide-react';
 
@@ -15,7 +15,12 @@ const QuizScreen = () => {
 
   const navigate = useNavigate();
 
+  const fetchedRef = useRef(false);
+
   useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
     const fetchQuiz = async () => {
       try {
         const savedPlan = localStorage.getItem('studyPlan');
@@ -28,18 +33,31 @@ const QuizScreen = () => {
         const parsed = JSON.parse(savedPlan);
         const schedule = parsed.schedule || [];
         
-        const today = schedule.find(day => !day.completed) || schedule[0];
+        const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+        const todayStr = (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
         
-        if (today && today.completed) {
-          setError("You have already completed today's quiz. Come back tomorrow!");
+        const today = schedule.find(day => day.date === todayStr);
+        
+        if (!today) {
+          setError("No topics scheduled for today.");
           setLoading(false);
           return;
         }
 
-        if (!today || !today.topics) {
-          setError("No topics scheduled for today.");
-          setLoading(false);
-          return;
+        // If today's quiz is completed, show the report instead of an error!
+        if (today.completed) {
+           const storedResults = localStorage.getItem('quizResults');
+           if (storedResults) {
+              const parsedResults = JSON.parse(storedResults);
+              if (!parsedResults.date || parsedResults.date === today.date) {
+                  setResults(parsedResults);
+                  setLoading(false);
+                  return;
+              }
+           }
+           setError("You have completed today's quiz. Come back tomorrow!");
+           setLoading(false);
+           return;
         }
 
         // Check if we already have a cached quiz for today
@@ -130,14 +148,18 @@ const QuizScreen = () => {
       const data = await response.json();
       
       if (data.status === 'success') {
-        setResults(data.data);
-        localStorage.setItem('quizResults', JSON.stringify(data.data));
+        const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+        const todayStr = (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
         
-        // Mark today as completed in localStorage (simplified logic)
+        const resultsWithDate = { ...data.data, date: todayStr };
+        setResults(resultsWithDate);
+        localStorage.setItem('quizResults', JSON.stringify(resultsWithDate));
+        
+        // Mark today as completed in localStorage
         const savedPlan = localStorage.getItem('studyPlan');
         if (savedPlan) {
             const parsed = JSON.parse(savedPlan);
-            const index = parsed.schedule.findIndex(d => !d.completed);
+            const index = parsed.schedule.findIndex(d => d.date === todayStr);
             if (index >= 0) parsed.schedule[index].completed = true;
             localStorage.setItem('studyPlan', JSON.stringify(parsed));
         }

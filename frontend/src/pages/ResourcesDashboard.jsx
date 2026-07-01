@@ -122,6 +122,17 @@ const ResourcesDashboard = () => {
          </div>
       )}
 
+      {resources.length === 0 && !loading && !error && !noWeakTopics && quizTaken && (
+        <div style={{ textAlign: 'center', padding: '4rem 0', backgroundColor: 'var(--card-bg)', borderRadius: '1rem', marginTop: '2rem' }}>
+          <h2 style={{ marginBottom: '1rem' }}>No Resources Found</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Our AI encountered an issue fetching your tailored resources (possibly due to rate limits).</p>
+          <button className="btn-primary" onClick={() => {
+            localStorage.removeItem('cachedResources');
+            window.location.reload();
+          }}>Retry Generation</button>
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '2rem', marginTop: '2rem' }}>
         
         {resources.map((res, index) => (

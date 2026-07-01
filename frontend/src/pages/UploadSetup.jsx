@@ -33,7 +33,8 @@ const UploadSetup = () => {
     setError(null);
 
     const formData = new FormData();
-    const currentDate = new Date().toISOString().split('T')[0];
+    const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+    const currentDate = (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
     formData.append('file', file);
     formData.append('current_date', currentDate);
     formData.append('exam_date', examDate);
