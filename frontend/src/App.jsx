@@ -5,6 +5,7 @@ import UploadSetup from './pages/UploadSetup';
 import StudySchedule from './pages/StudySchedule';
 import QuizScreen from './pages/QuizScreen';
 import ResourcesDashboard from './pages/ResourcesDashboard';
+import LandingPage from './pages/LandingPage';
 
 function App() {
   return (
@@ -13,7 +14,7 @@ function App() {
         <Navigation />
         <main className="main-content">
           <Routes>
-            <Route path="/" element={<Navigate to="/upload" replace />} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/upload" element={<UploadSetup />} />
             <Route path="/schedule" element={<StudySchedule />} />
             <Route path="/quiz" element={<QuizScreen />} />
